@@ -33,7 +33,7 @@ test('all Markdown loads and renders complete semantic content', async () => {
   }
   assert.equal(doc.querySelectorAll('.action-table tbody tr').length, content.actions.length);
   assert.equal(content.todo.id, 'todo');
-  assert.match(doc.getElementById('todo').textContent, /待补充/);
+  assert.match(doc.getElementById('todo').textContent, /待完善方向/);
   assert.match(doc.getElementById('todo').textContent, /三甲医院/);
   assert.match(doc.getElementById('todo').textContent, /起诉与维权/);
   assert.equal(doc.querySelectorAll('#todo [data-check]').length, 0);
