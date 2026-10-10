@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { JSDOM } = require('jsdom');
 const html = fs.readFileSync(path.join(__dirname, '..', 'dist', 'index.html'), 'utf8');
+const contentCount = category => fs.readdirSync(path.join(__dirname, '..', 'content', category)).filter(file => file.endsWith('.md')).length;
 const page = hash => {
   const dom = new JSDOM(html, {
     url:`https://example.org/guide/${hash || ''}`, runScripts:'outside-only',
@@ -26,10 +27,10 @@ const search = async (dom, query) => {
 test('build produces all content and a portable self-contained page', () => {
   const dom = page();
   const doc = dom.window.document;
-  assert.equal(doc.querySelectorAll('[data-check]').length, 11);
-  assert.equal(doc.querySelectorAll('#faq-items details').length, 13);
-  assert.equal(doc.querySelectorAll('.template').length, 2);
-  assert.equal(doc.querySelectorAll('.small-table tbody tr').length, 3);
+  assert.equal(doc.querySelectorAll('[data-check]').length, contentCount('actions'));
+  assert.equal(doc.querySelectorAll('#faq-items details').length, contentCount('faq'));
+  assert.equal(doc.querySelectorAll('.template').length, contentCount('templates'));
+  assert.equal(doc.querySelectorAll('.small-table tbody tr').length, contentCount('sealing'));
   assert.equal(doc.querySelectorAll('script[src],link[rel="stylesheet"]').length, 0);
   const ids = [...doc.querySelectorAll('[id]')].map(item => item.id);
   assert.equal(ids.length, new Set(ids).size);
@@ -42,7 +43,7 @@ test('search covers checklist, hidden answers, templates, sealing and references
   for (const expected of ['行动清单','常见答疑','申请模板']) assert.ok(categories.includes(expected));
   assert.ok((await search(dom, '介质编号')).some(item => item.textContent.includes('封存字段')));
   assert.ok((await search(dom, '民法典')).some(item => item.textContent.includes('参考依据')));
-  assert.equal(dom.window.document.querySelector('#progress-text').textContent, '已核对 0 / 11 项');
+  assert.equal(dom.window.document.querySelector('#progress-text').textContent, `已核对 0 / ${contentCount('actions')} 项`);
   assert.equal(dom.window.document.querySelectorAll('[data-step][hidden]').length, 0);
   dom.window.close();
 });
