@@ -2,7 +2,7 @@
   "name": "medical-malpractice-guide",
   "version": "1.0.0",
   "private": true,
-  "description": "Markdown 驱动的疑似医疗事故应对清单与答疑知识库",
+  "description": "供患者和家属参考的疑似医疗事故应对指南：行动清单、常见答疑与书面申请模板。",
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.cjs",
