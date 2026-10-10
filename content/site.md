@@ -1,8 +1,8 @@
 ---
 id: site
 repository: https://github.com/Zhanweelee/medical-malpractice-guide
-pageTitle: 疑似医疗事故应对 · 行动清单与答疑
-brand: 就医应急参考 / 行动与留证
+pageTitle: 医疗事故应对手册（CN）
+brand: 医疗事故应对手册（CN）
 eyebrow: 行动清单与答疑
 title: |-
   遇到疑似医疗事故，
