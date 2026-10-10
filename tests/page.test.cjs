@@ -1,0 +1,112 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const { JSDOM } = require('jsdom');
+const html = fs.readFileSync(path.join(__dirname, '..', 'dist', 'index.html'), 'utf8');
+const page = hash => {
+  const dom = new JSDOM(html, {
+    url:`https://example.org/guide/${hash || ''}`, runScripts:'outside-only',
+    beforeParse(window) { window.HTMLElement.prototype.scrollIntoView = () => {}; }
+  });
+  const names = ['search-engine.js','checklist.js','search-ui.js'];
+  [...dom.window.document.querySelectorAll('script')].forEach((script, index) => {
+    vm.runInContext(script.textContent, dom.getInternalVMContext(), { filename:path.join(__dirname, '..', 'src', names[index]) });
+  });
+  return dom;
+};
+const search = async (dom, query) => {
+  const field = dom.window.document.getElementById('global-search');
+  field.value = query;
+  field.dispatchEvent(new dom.window.Event('input', { bubbles:true }));
+  await new Promise(resolve => setTimeout(resolve, 200));
+  return [...dom.window.document.querySelectorAll('#global-results li')];
+};
+test('build produces all content and a portable self-contained page', () => {
+  const dom = page();
+  const doc = dom.window.document;
+  assert.equal(doc.querySelectorAll('[data-check]').length, 11);
+  assert.equal(doc.querySelectorAll('#faq-items details').length, 13);
+  assert.equal(doc.querySelectorAll('.template').length, 2);
+  assert.equal(doc.querySelectorAll('.small-table tbody tr').length, 3);
+  assert.equal(doc.querySelectorAll('script[src],link[rel="stylesheet"]').length, 0);
+  const ids = [...doc.querySelectorAll('[id]')].map(item => item.id);
+  assert.equal(ids.length, new Set(ids).size);
+  dom.window.close();
+});
+test('search covers checklist, hidden answers, templates, sealing and references', async () => {
+  const dom = page();
+  const results = await search(dom, '转院');
+  const categories = results.map(item => item.querySelector('.result-category').textContent);
+  for (const expected of ['行动清单','常见答疑','申请模板']) assert.ok(categories.includes(expected));
+  assert.ok((await search(dom, '介质编号')).some(item => item.textContent.includes('封存字段')));
+  assert.ok((await search(dom, '民法典')).some(item => item.textContent.includes('参考依据')));
+  assert.equal(dom.window.document.querySelector('#progress-text').textContent, '已核对 0 / 11 项');
+  assert.equal(dom.window.document.querySelectorAll('[data-step][hidden]').length, 0);
+  dom.window.close();
+});
+test('FAQ result clears independent FAQ filter, opens target and moves focus', async () => {
+  const dom = page();
+  const doc = dom.window.document;
+  const faqField = doc.getElementById('faq-search');
+  faqField.value = '完全无关的文本';
+  faqField.dispatchEvent(new dom.window.Event('input', { bubbles:true }));
+  assert.ok(doc.getElementById('faq-12').hidden);
+  await search(dom, '免责');
+  doc.querySelector('#global-results a[href="#faq-12"]').click();
+  assert.equal(doc.getElementById('faq-12').open, true);
+  assert.equal(doc.getElementById('faq-12').hidden, false);
+  assert.equal(faqField.value, '');
+  assert.equal(doc.activeElement.id, 'faq-12');
+  dom.window.close();
+});
+test('empty search, clear, Escape and shortcut work; unsafe query stays text', async () => {
+  const dom = page();
+  const doc = dom.window.document;
+  await search(dom, '<img src=x onerror=alert(1)>');
+  assert.equal(doc.querySelector('#global-results img'), null);
+  await search(dom, '不存在的宇宙患者');
+  assert.match(doc.getElementById('global-status').textContent, /没有找到/);
+  await search(dom, '监控');
+  doc.getElementById('global-clear').click();
+  assert.equal(doc.getElementById('global-results').hidden, true);
+  await search(dom, '免责');
+  doc.getElementById('global-search').dispatchEvent(new dom.window.KeyboardEvent('keydown', { key:'Escape', bubbles:true }));
+  assert.equal(doc.getElementById('global-search').value, '');
+  doc.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key:'k', ctrlKey:true, bubbles:true }));
+  assert.equal(doc.activeElement.id, 'global-search');
+  dom.window.close();
+});
+test('deep links open FAQ; print restores filter and disclosure state', () => {
+  const dom = page('#faq-12');
+  const doc = dom.window.document;
+  assert.ok(doc.getElementById('faq-12').open);
+  const field = doc.getElementById('faq-search');
+  field.value = '免责';
+  field.dispatchEvent(new dom.window.Event('input', { bubbles:true }));
+  assert.ok(doc.getElementById('faq-01').hidden);
+  dom.window.dispatchEvent(new dom.window.Event('beforeprint'));
+  assert.ok([...doc.querySelectorAll('#faq-items details')].every(item => item.open && !item.hidden));
+  dom.window.dispatchEvent(new dom.window.Event('afterprint'));
+  assert.ok(doc.getElementById('faq-01').hidden);
+  assert.equal(doc.getElementById('faq-01').open, false);
+  assert.ok(doc.getElementById('faq-12').open);
+  dom.window.close();
+});
+test('checklist persists without search affecting it; submit opens first result', async () => {
+  const dom = page();
+  const doc = dom.window.document;
+  const check = doc.querySelector('[data-check]');
+  check.checked = true;
+  check.dispatchEvent(new dom.window.Event('change'));
+  assert.equal(JSON.parse(dom.window.localStorage.getItem('medical-incident-guide-checklist-v1'))[check.dataset.check], true);
+  await search(dom, '免责');
+  assert.equal(check.checked, true);
+  doc.getElementById('global-form').dispatchEvent(new dom.window.Event('submit', { cancelable:true }));
+  assert.ok(doc.activeElement.id);
+  dom.window.confirm = () => true;
+  doc.getElementById('reset').click();
+  assert.equal(check.checked, false);
+  dom.window.close();
+});
