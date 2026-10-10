@@ -153,3 +153,9 @@
     }
     @media screen and (max-width:360px) { h1 { font-size:24px; } }
     @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+
+.tools .repo-link,.tools #print { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.tools .repo-link { min-height:44px; padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); color:var(--ink); text-decoration:none; font-size:14px; font-weight:600; line-height:1.4; }
+.tools .repo-link:hover { border-color:var(--green); background:var(--soft); }
+.tools .repo-link svg,.tools #print svg { width:18px; height:18px; flex:none; }
+@media screen and (max-width:720px) { .tools .repo-link { width:44px; padding:0; } .tools .repo-link span { display:none; } .tools .repo-link svg { width:19px; height:19px; } .tools #print { gap:6px; } .tools #print svg { width:16px; height:16px; } }
