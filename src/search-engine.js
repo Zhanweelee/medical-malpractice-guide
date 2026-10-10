@@ -21,10 +21,10 @@ const MedicalGuideSearch = (() => {
   };
   const locate = (text, term) => {
     const exact = text.indexOf(term);
-    if (exact >= 0) return { score:100, index:exact };
+    if (exact >= 0) return { score:100, index:exact, length:term.length };
     for (const alternative of variants(term).slice(1)) {
       const index = text.indexOf(alternative);
-      if (index >= 0) return { score:85, index };
+      if (index >= 0) return { score:85, index, length:alternative.length };
     }
     if (term.length >= 4) {
       for (let start = text.indexOf(term[0]); start >= 0; start = text.indexOf(term[0], start + 1)) {
@@ -37,7 +37,7 @@ const MedicalGuideSearch = (() => {
           // Confirm that the complete term fits in this short passage.
           let cursor = 0;
           for (const character of text.slice(start, position + 1)) if (character === term[cursor]) cursor++;
-          if (cursor === term.length) return { score:60, index:start };
+          if (cursor === term.length) return { score:60, index:start, length:position - start + 1 };
         }
       }
     }
@@ -45,7 +45,7 @@ const MedicalGuideSearch = (() => {
       for (let start = 0; start < text.length; start++) {
         for (const length of [term.length, term.length - 1, term.length + 1]) {
           const sample = text.slice(start, start + length);
-          if (sample.length === length && distance(sample, term) <= 1) return { score:45, index:start };
+          if (sample.length === length && distance(sample, term) <= 1) return { score:45, index:start, length };
         }
       }
     }
@@ -79,5 +79,39 @@ const MedicalGuideSearch = (() => {
     const start = Math.max(0, originalOffset - 35);
     return `${start ? '…' : ''}${text.slice(start, start + 160)}${start + 160 < text.length ? '…' : ''}`;
   };
-  return { search, excerpt, terms, variants };
+  const highlight = (value, query) => {
+    const text = String(value);
+    let originalOffset = 0;
+    const offsets = [...text].flatMap(character => {
+      const start = originalOffset;
+      originalOffset += character.length;
+      return normalize(character).split('').map(() => ({ start, end:originalOffset }));
+    });
+    const normalized = normalize(text);
+    const ranges = terms(query).flatMap(term => {
+      const exact = variants(term).flatMap(alternative => {
+        const positions = [];
+        for (let index = normalized.indexOf(alternative); index >= 0; index = normalized.indexOf(alternative, index + 1)) {
+          positions.push({ index, length:alternative.length });
+        }
+        return positions;
+      });
+      const approximate = exact.length ? [] : [locate(normalized, term)].filter(match => match.score > 0);
+      return [...exact, ...approximate].map(match => ({ start:offsets[match.index].start, end:offsets[match.index + match.length - 1].end }));
+    }).sort((a,b) => a.start - b.start);
+    const merged = ranges.reduce((items, range) => {
+      const previous = items.at(-1);
+      return previous && range.start <= previous.end
+        ? [...items.slice(0,-1), { start:previous.start, end:Math.max(previous.end, range.end) }]
+        : [...items, range];
+    }, []);
+    let cursor = 0;
+    const parts = merged.flatMap(range => {
+      const before = text.slice(cursor, range.start);
+      cursor = range.end;
+      return [...(before ? [{ text:before, match:false }] : []), { text:text.slice(range.start, range.end), match:true }];
+    });
+    return [...parts, ...(cursor < text.length || !parts.length ? [{ text:text.slice(cursor), match:false }] : [])];
+  };
+  return { search, excerpt, highlight, terms, variants };
 })();

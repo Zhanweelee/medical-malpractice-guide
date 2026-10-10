@@ -3,9 +3,8 @@
 供家属在诊疗出现严重异常时参考的开源知识库：推动救治、固定证据、协调转院，并逐项核对落实情况。
 
 - [在线 GitHub Pages](https://zhanweelee.github.io/medical-malpractice-guide/)
-- [现有独立域名](https://medical-malpractice.listen.im/)
 - 11 项行动清单、13 条答疑、2 份书面申请模板与封存核对字段。
-- 全站模糊搜索覆盖清单、折叠答疑正文、模板和参考依据，支持多关键词、常见同义词及少量错字；`⌘ / Ctrl + K` 打开搜索。
+- 顶部全站模糊搜索覆盖清单、折叠答疑正文、模板和参考依据，输入时悬浮展示结果并高亮摘要中的命中词，点击后定位原文；`⌘ / Ctrl + K` 聚焦搜索，Esc 收起结果。
 - 清单进度只保存在当前浏览器；页面不收集患者信息；可打印或保存为 PDF。
 
 ## 修改内容
@@ -21,7 +20,7 @@
 | `content/sealing/` | 病历、实物和监控封存字段 |
 | `content/references.md` | 官方参考依据 |
 
-日常更新只需修改 Markdown 并提交 PR。合并到 `main` 后，GitHub Actions 自动构建、测试并发布到 GitHub Pages。PR 只运行验证，不发布站点；部署无需个人访问令牌。
+日常更新只需修改 Markdown 并提交 PR。合并到 `main` 后，GitHub Actions 自动构建、测试并发布到 GitHub Pages。PR 只运行验证，不发布站点；部署使用 GitHub 自动提供的令牌。
 
 ## 本地运行
 
@@ -37,8 +36,6 @@ npm run serve
 打开 `http://localhost:8768/`。构建产物是 `dist/index.html`，CSS 和 JavaScript 已内联，也可将该 HTML 单独保存后离线打开。根目录 `index.html` 同样是自动生成的兼容副本，不应直接编辑。
 
 `src/` 保存样式及交互，`scripts/` 负责 Markdown 校验与安全渲染，`tests/` 验证搜索、内容构建与页面交互。首次 Fork 后在仓库的 Settings → Pages 中选择 **GitHub Actions**，并按需修改 `content/site.md` 的仓库链接。
-
-现有独立域名由 Cloudflare Worker 提供，`wrangler.jsonc` 和 `.assetsignore` 仅供维护该镜像使用；GitHub Actions 的自动发布目标是 GitHub Pages。
 
 ## 贡献与许可
 

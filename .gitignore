@@ -1,7 +1,6 @@
 node_modules/
 dist/
 index.html
-.wrangler/
 *.png
 .DS_Store
 coverage/

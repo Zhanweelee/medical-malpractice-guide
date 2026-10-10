@@ -57,3 +57,18 @@ test('does not mutate documents; excerpt contains the matched context', () => {
   assert.equal(JSON.stringify(docs), before);
   assert.match(engine.excerpt('开头'.repeat(100) + '概括免责条款' + '结尾'.repeat(100), '免责'), /概括免责条款/);
 });
+test('highlights all exact, synonym and typo matches while preserving original text', () => {
+  const value = '向医务部提交转院申请，转院原因和救护车安排需留存。';
+  const parts = engine.highlight(value, '医务处 转院 救护撤');
+  assert.equal(Array.from(parts, part=>part.text).join(''), value);
+  assert.deepEqual(Array.from(parts.filter(part=>part.match), part=>part.text), ['医务部','转院','转院','救护车']);
+  assert.equal(engine.highlight('正常文本', '')[0].match, false);
+  assert.equal(engine.highlight('<img src=x>', 'img').map(part=>part.text).join(''), '<img src=x>');
+});
+
+test('highlight handles supplementary Unicode characters', () => {
+  const value = '𠮷医生病历';
+  const parts = engine.highlight(value, '病历');
+  assert.equal(Array.from(parts, part=>part.text).join(''), value);
+  assert.deepEqual(Array.from(parts.filter(part=>part.match), part=>part.text), ['病历']);
+});

@@ -60,6 +60,7 @@ test('FAQ result clears independent FAQ filter, opens target and moves focus', a
   assert.equal(doc.getElementById('faq-12').hidden, false);
   assert.equal(faqField.value, '');
   assert.equal(doc.activeElement.id, 'faq-12');
+  assert.equal(doc.getElementById('global-popover').hidden, true);
   dom.window.close();
 });
 test('empty search, clear, Escape and shortcut work; unsafe query stays text', async () => {
@@ -74,9 +75,49 @@ test('empty search, clear, Escape and shortcut work; unsafe query stays text', a
   assert.equal(doc.getElementById('global-results').hidden, true);
   await search(dom, '免责');
   doc.getElementById('global-search').dispatchEvent(new dom.window.KeyboardEvent('keydown', { key:'Escape', bubbles:true }));
-  assert.equal(doc.getElementById('global-search').value, '');
+  assert.equal(doc.getElementById('global-search').value, '免责');
+  assert.equal(doc.getElementById('global-popover').hidden, true);
   doc.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key:'k', ctrlKey:true, bubbles:true }));
   assert.equal(doc.activeElement.id, 'global-search');
+  dom.window.close();
+});
+test('top search floats results, highlights snippets and closes on outside click', async () => {
+  const dom = page();
+  const doc = dom.window.document;
+  assert.ok(doc.querySelector('.masthead #global-search'));
+  assert.equal(doc.querySelector('main #site-search'), null);
+  assert.equal(doc.getElementById('global-popover').hidden, true);
+  await search(dom, '转院 免责');
+  assert.equal(doc.getElementById('global-popover').hidden, false);
+  assert.equal(doc.getElementById('global-search').getAttribute('aria-expanded'), 'true');
+  assert.ok(doc.querySelectorAll('#global-results p mark').length > 0);
+  doc.querySelector('h1').click();
+  assert.equal(doc.getElementById('global-popover').hidden, true);
+  doc.getElementById('global-search').dispatchEvent(new dom.window.Event('focus'));
+  assert.equal(doc.getElementById('global-popover').hidden, false);
+  doc.getElementById('global-search').dispatchEvent(new dom.window.KeyboardEvent('keydown', {key:'ArrowDown',bubbles:true,cancelable:true}));
+  assert.equal(doc.activeElement, doc.querySelector('#global-results a'));
+  doc.activeElement.dispatchEvent(new dom.window.KeyboardEvent('keydown', {key:'ArrowUp',bubbles:true,cancelable:true}));
+  assert.equal(doc.activeElement.id, 'global-search');
+  dom.window.close();
+});
+test('outside click cancels pending results and IME composition waits for confirmation', async () => {
+  const dom = page();
+  const doc = dom.window.document;
+  const field = doc.getElementById('global-search');
+  field.value = '转院';
+  field.dispatchEvent(new dom.window.Event('input'));
+  doc.querySelector('h1').click();
+  await new Promise(resolve=>setTimeout(resolve,200));
+  assert.equal(doc.getElementById('global-popover').hidden, true);
+  field.dispatchEvent(new dom.window.CompositionEvent('compositionstart'));
+  field.value = '监控';
+  field.dispatchEvent(new dom.window.InputEvent('input',{isComposing:true}));
+  await new Promise(resolve=>setTimeout(resolve,200));
+  assert.equal(doc.getElementById('global-popover').hidden, true);
+  field.dispatchEvent(new dom.window.CompositionEvent('compositionend'));
+  await new Promise(resolve=>setTimeout(resolve,200));
+  assert.equal(doc.getElementById('global-popover').hidden, false);
   dom.window.close();
 });
 test('deep links open FAQ; print restores filter and disclosure state', () => {
