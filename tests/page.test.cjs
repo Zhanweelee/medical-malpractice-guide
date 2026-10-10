@@ -8,10 +8,10 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'dist', 'index.html'), '
 const contentCount = category => fs.readdirSync(path.join(__dirname, '..', 'content', category)).filter(file => file.endsWith('.md')).length;
 const page = hash => {
   const dom = new JSDOM(html, {
-    url:`https://example.org/guide/${hash || ''}`, runScripts:'outside-only',
+    url:`https://example.org/guide/${hash || ''}`, runScripts:'outside-only', pretendToBeVisual:true,
     beforeParse(window) { window.HTMLElement.prototype.scrollIntoView = () => {}; }
   });
-  const names = ['search-engine.js','checklist.js','search-ui.js'];
+  const names = ['search-engine.js','checklist.js','search-ui.js','navigation.js','print-ui.js'];
   [...dom.window.document.querySelectorAll('script')].forEach((script, index) => {
     vm.runInContext(script.textContent, dom.getInternalVMContext(), { filename:path.join(__dirname, '..', 'src', names[index]) });
   });
@@ -154,6 +154,7 @@ test('deep links open FAQ; print restores filter and disclosure state', () => {
   field.value = '免责';
   field.dispatchEvent(new dom.window.Event('input', { bubbles:true }));
   assert.ok(doc.getElementById('faq-01').hidden);
+  doc.body.dataset.printMode = 'full';
   dom.window.dispatchEvent(new dom.window.Event('beforeprint'));
   assert.ok([...doc.querySelectorAll('#faq-items details')].every(item => item.open && !item.hidden));
   dom.window.dispatchEvent(new dom.window.Event('afterprint'));

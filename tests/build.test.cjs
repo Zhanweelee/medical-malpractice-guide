@@ -54,7 +54,11 @@ test('all Markdown loads and renders complete semantic content', async () => {
   }
   assert.match(doc.getElementById('transport-resources').textContent, /未实际致电/);
   assert.equal(doc.querySelectorAll('#transport-resources [data-check]').length, 0);
-  assert.equal(doc.querySelector('h1').childNodes[1].nodeName, 'BR');
+  assert.equal(doc.querySelector('.guide-intro h1').childNodes[1].nodeName, 'BR');
+  const topNavigation = doc.querySelector('.site-header nav');
+  assert.ok(topNavigation);
+  assert.ok(topNavigation.compareDocumentPosition(doc.querySelector('.guide-intro')) & 4);
+  assert.equal(topNavigation.querySelectorAll('a').length, content.site.nav.length);
   assert.throws(() => renderPage({ ...content, actions:[{ ...content.actions[0], body:'wrong headers' }] }, {}), /missing action body sections/);
   for (const id of ['global-search','print','action-rescue']) {
     assert.throws(() => renderPage({ ...content, faq:[{ ...content.faq[0], id }] }, {}), /duplicate DOM ids/);

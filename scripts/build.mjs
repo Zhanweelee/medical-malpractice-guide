@@ -5,10 +5,10 @@ import { loadContent, renderPage } from './render.mjs';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const content = await loadContent(join(root, 'content'));
-const [style, engine, checklist, search] = await Promise.all(
-  ['style.css','search-engine.js','checklist.js','search-ui.js'].map(name => readFile(join(root, 'src', name), 'utf8'))
+const [style, engine, checklist, search, navigation, printStyle, print] = await Promise.all(
+  ['style.css','search-engine.js','checklist.js','search-ui.js','navigation.js','print.css','print-ui.js'].map(name => readFile(join(root, 'src', name), 'utf8'))
 );
-const page = renderPage(content, { style, engine, checklist, search });
+const page = renderPage(content, { style, engine, checklist, search, navigation, printStyle, print });
 await mkdir(join(root, 'dist'), { recursive:true });
 await writeFile(join(root, 'dist', 'index.html'), page);
 await writeFile(join(root, 'dist', '.nojekyll'), '');

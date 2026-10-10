@@ -6,7 +6,6 @@
       const saveStatus = document.getElementById('save-status');
       let state = {};
       let canSave = true;
-      let printSnapshot = [];
       const showStorageError = () => {
         canSave = false;
         saveStatus.textContent = '当前浏览器无法保存进度，或旧进度无法读取。勾选仍可使用，关闭后可能丢失；可打印留存。';
@@ -54,17 +53,8 @@
           item.hidden = !match;
           if (match) visible++;
         });
-        document.getElementById('search-status').textContent = query ? `找到 ${visible} / ${faqs.length} 个问题 · 点击展开查看答案。` : `共 ${faqs.length} 个问题 · 点击展开；打印时会包含全部答案。`;
+        document.getElementById('search-status').textContent = query ? `找到 ${visible} / ${faqs.length} 个问题 · 点击展开查看答案。` : `共 ${faqs.length} 个问题 · 点击展开；完整正文打印包含全部答案。`;
         document.getElementById('faq-empty').hidden = visible !== 0;
       });
-      window.addEventListener('beforeprint', () => {
-        printSnapshot = faqs.map(item => ({ item, open:item.open, hidden:item.hidden }));
-        faqs.forEach(item => { item.open = true; item.hidden = false; });
-      });
-      window.addEventListener('afterprint', () => {
-        printSnapshot.forEach(({ item, open, hidden }) => { item.open = open; item.hidden = hidden; });
-        printSnapshot = [];
-      });
-      document.getElementById('print').addEventListener('click', () => window.print());
       render();
     })();
