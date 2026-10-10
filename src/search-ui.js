@@ -8,20 +8,28 @@
   let timer;
   let composing = false;
   const groups = [
-    ['使用说明', '.intro,.rule,.section-note,.inline-note,footer'],
+    ['使用说明', '.intro,.rule,.section-note,.inline-note,footer,.transport-directory > p'],
     ['行动清单', '[data-step]'], ['常见答疑', '#faq-items details'],
     ['申请模板', '.template'], ['封存字段', '.small-table tbody tr'],
-    ['参考依据', '.source-list li']
+    ['参考依据', '.source-list li'], ['转运资源', '.transport-directory tbody tr'], ['待完善内容', '#todo li']
   ];
+  const provinceHeading = target => {
+    let previous = target.closest('table')?.previousElementSibling;
+    while (previous && previous.tagName !== 'H3') previous = previous.previousElementSibling;
+    return previous?.textContent || '';
+  };
   const documents = groups.flatMap(([category, selector]) => [...document.querySelectorAll(selector)].map((target, index) => {
-    const titleElement = target.querySelector('.check') || target.querySelector('summary,th,a')
+    const titleElement = (category === '转运资源' ? target.querySelector('td:nth-child(2) strong') : category === '待完善内容' ? target.querySelector('strong') : null) || target.querySelector('.check') || target.querySelector('summary,th,a')
       || (target.classList.contains('template') ? target.previousElementSibling : null);
     const step = target.querySelector('.step')?.textContent.trim();
     const label = titleElement?.textContent.trim();
     const title = (step ? `${step} ${label.slice(step.length).trim()}` : label)
       || (target.closest('section')?.querySelector('h2')?.textContent.trim() || '使用原则与说明');
     if (!target.id) target.id = target.dataset.step ? `action-${target.dataset.step}` : `search-${groups.findIndex(group => group[0] === category)}-${index + 1}`;
-    return { id:target.id, title, text:target.textContent.trim(), category, target };
+    const text = category === '转运资源'
+      ? `${provinceHeading(target)} ${target.textContent.trim()}`
+      : target.textContent.trim();
+    return { id:target.id, title, text, category, target };
   }));
   const close = () => {
     window.clearTimeout(timer);

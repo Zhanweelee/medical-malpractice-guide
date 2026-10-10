@@ -43,6 +43,13 @@ test('search covers checklist, hidden answers, templates, sealing and references
   for (const expected of ['行动清单','常见答疑','申请模板']) assert.ok(categories.includes(expected));
   assert.ok((await search(dom, '介质编号')).some(item => item.textContent.includes('封存字段')));
   assert.ok((await search(dom, '民法典')).some(item => item.textContent.includes('参考依据')));
+  const roadmapResults = await search(dom, '微信');
+  assert.ok(roadmapResults.some(item => item.querySelector('.result-category').textContent === '待完善内容'));
+  const roadmapLink = roadmapResults.find(item => item.querySelector('.result-category').textContent === '待完善内容').querySelector('a');
+  assert.match(roadmapLink.textContent, /救护车转运资源/);
+  roadmapLink.click();
+  assert.ok(dom.window.document.activeElement.closest('#todo'));
+  assert.equal(dom.window.document.querySelector('#global-popover').hidden, true);
   assert.equal(dom.window.document.querySelector('#progress-text').textContent, `已核对 0 / ${contentCount('actions')} 项`);
   assert.equal(dom.window.document.querySelectorAll('[data-step][hidden]').length, 0);
   dom.window.close();
@@ -61,6 +68,25 @@ test('FAQ result clears independent FAQ filter, opens target and moves focus', a
   assert.equal(faqField.value, '');
   assert.equal(doc.activeElement.id, 'faq-12');
   assert.equal(doc.getElementById('global-popover').hidden, true);
+  dom.window.close();
+});
+test('transfer directory searches cities and phone numbers and navigates to a contact', async () => {
+  const dom = page();
+  for (const query of ['福建','泉州','0595-22512120']) {
+    const results = await search(dom, query);
+    const contact = results.find(item => item.querySelector('.result-category').textContent === '转运资源');
+    assert.ok(contact, query);
+    assert.match(contact.querySelector('a').textContent, query === '福建' ? /厦门|泉州/ : /泉州市/);
+    assert.ok(contact.querySelector('mark'));
+    contact.querySelector('a').click();
+    assert.ok(dom.window.document.activeElement.closest('.transport-directory'));
+    assert.equal(dom.window.document.getElementById('global-popover').hidden, true);
+  }
+  dom.window.close();
+});
+test('directory service limitations can be found globally', async () => {
+  const dom = page();
+  assert.ok((await search(dom, '留空待补充')).some(item => item.textContent.includes('暂未找到')));
   dom.window.close();
 });
 test('empty search, clear, Escape and shortcut work; unsafe query stays text', async () => {

@@ -93,6 +93,17 @@
     .source-list { font-size:13px; color:var(--muted); padding-left:20px; }
     .source-list li { margin-bottom:8px; }
     .source-list ul { padding-left:0; }
+    .transport-directory { font-size:14px; }
+    .transport-directory table { margin:16px 0 28px; border:1px solid var(--line); background:var(--surface); }
+    .transport-directory th,.transport-directory td { padding:12px; font-size:13px; line-height:1.7; }
+    .transport-directory th:nth-child(1) { width:8%; }
+    .transport-directory th:nth-child(2) { width:18%; }
+    .transport-directory th:nth-child(3) { width:15%; }
+    .transport-directory th:nth-child(4) { width:30%; }
+    .transport-directory th:nth-child(5) { width:17%; }
+    .transport-directory th:nth-child(6) { width:12%; }
+    .transport-directory td:nth-child(2) { font-weight:600; }
+    .transport-directory td:last-child { color:var(--muted); }
     footer { border-top:1px solid var(--line); margin-top:40px; padding-top:20px; color:var(--muted); font-size:13px; }
     [hidden] { display:none !important; }
     @media screen and (max-width:720px) {
@@ -125,6 +136,16 @@
       tr.done { background:#f0f5ef; }
       .template { padding:20px; }
       .small-table th,.small-table td { padding:12px; }
+      .transport-directory table,.transport-directory tbody { display:block; }
+      .transport-directory thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+      .transport-directory tr { display:block; padding:16px; border-bottom:1px solid var(--line); }
+      .transport-directory td { display:block; border:0; padding:0; margin-bottom:8px; }
+      .transport-directory td:first-child { color:var(--green); font-size:12px; }
+      .transport-directory td:nth-child(2) { font-size:16px; }
+      .transport-directory td:nth-child(3)::before { content:'联系方式：'; }
+      .transport-directory td:nth-child(5)::before { content:'来源：'; }
+      .transport-directory td:nth-child(6)::before { content:'录入：'; }
+      .transport-directory td:last-child { margin-bottom:0; }
     }
     @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
     @media print {
